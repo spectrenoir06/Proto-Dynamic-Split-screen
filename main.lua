@@ -1,39 +1,5 @@
 vector = require "vector"
 
-function love.load()
-
-	if arg[#arg] == "-debug" then require("mobdebug").start() end
-
-	windowWidth  = love.graphics.getWidth()
-	windowHeight = love.graphics.getHeight()
-
-	window = vector(windowWidth, windowHeight)
-
-	p1 = {
-		v = vector(0,0),
-		color = {
-			r = 0,
-			g = 0,
-			b = 255,
-			a = 255
-		}
-	}
-
-	p2 = {
-		v = vector(0,0),
-		color = {
-			r = 255,
-			g = 0,
-			b = 0,
-			a = 255
-		}
-	}
-
-	img = love.graphics.newImage("img.png")
-
-	view1 = vector(0,0)
-	view2 = vector(0,0)
-end
 
 function movePlayer(dt)
 	if love.keyboard.isDown("z") then
@@ -95,85 +61,117 @@ function viewPosition(p1, p2)
 	return out + direction;
 end
 
+function drawMap()
+	love.graphics.setColor(255, 255, 255, 255)
+	love.graphics.draw(img, 0 - img:getWidth()/2, 0 - img:getHeight()/2)
+end
+
+function drawPlayer(player)
+	love.graphics.setColor(player.color[1], player.color[2], player.color[3], player.color[4])
+	love.graphics.rectangle("fill", player.v.x - 5, player.v.y - 5, 10, 10)
+end
+
+function love.load()
+
+	if arg[#arg] == "-debug" then require("mobdebug").start() end
+
+	windowWidth  = love.graphics.getWidth()
+	windowHeight = love.graphics.getHeight()
+
+	window = vector(windowWidth, windowHeight)
+
+	p1 = {
+		v = vector(0,0),
+		color = {0, 0, 255, 255}
+	}
+
+	p2 = {
+		v = vector(0,0),
+		color = {255, 0, 0, 255}
+	}
+
+	img = love.graphics.newImage("img.png")
+
+	view1 = vector(0,0)
+	view2 = vector(0,0)
+end
+
 function love.draw()
-		-- Draw everything from player ones point of view.
+	if not singleView then
+		--------------------- Set stencil --------------------
+		love.graphics.push()
+			love.graphics.translate(windowWidth/2, windowHeight/2)
+			local angle = (p1.v - p2.v):perpendicular()
 
-		-- If we're splitting the views then we'll do the same for player twos view.
-		if not singleView then
-			love.graphics.push()
-				love.graphics.translate(windowWidth/2, windowHeight/2)
-				local angle = (p1.v - p2.v):perpendicular()
+			love.graphics.rotate(angle:angleTo())
+			local length = window:len()
 
-				love.graphics.rotate(angle:angleTo())
-				local length = window:len()
+			love.graphics.stencil(function()
+				love.graphics.rectangle('fill', -length/2, 0, length, length/2)
+			end, "replace", 1)
+		love.graphics.pop()
+		----------------------------------------------------
 
-				love.graphics.line(-length, 0, length, 0)
+		------------------- Draw p1 view -------------------
+		love.graphics.push()
+			love.graphics.translate(-view1.x, -view1.y)
+			love.graphics.setStencilTest("equal", 0)
 
-				love.graphics.stencil(function()
-					love.graphics.rectangle('fill', -800, 0, 800*2, 800)
-				end, "replace", 1)
-			love.graphics.pop()
+			drawMap()
+			drawPlayer(p1)
+			drawPlayer(p2)
 
-			love.graphics.push()
-				love.graphics.setStencilTest("less", 1)
-				love.graphics.translate(-view1.x, -view1.y)
+			love.graphics.setStencilTest()
+		love.graphics.pop()
+		----------------------------------------------------
 
-				love.graphics.setColor(255, 255, 255, 255)
-				love.graphics.draw(img, 0 - img:getWidth()/2, 0 - img:getHeight()/2)   -- map
+		------------------- Draw p2 view -------------------
+		love.graphics.push()
+			love.graphics.translate(-view2.x, -view2.y)
+			love.graphics.setStencilTest("equal", 1)
 
-				love.graphics.setColor(p1.color.r, p1.color.g, p1.color.b, p1.color.a) -- player 1
-				love.graphics.rectangle("fill", p1.v.x - 5, p1.v.y - 5, 10, 10)
+			drawMap()
+			drawPlayer(p1)
+			drawPlayer(p2)
 
-				love.graphics.setColor(p2.color.r, p2.color.g, p2.color.b, p2.color.a) -- player 2
-				love.graphics.rectangle("fill", p2.v.x - 5, p2.v.y - 5, 10, 10)
+			love.graphics.setStencilTest()
+		love.graphics.pop()
+		----------------------------------------------------
 
-				love.graphics.setStencilTest()
-			love.graphics.pop()
-
-			love.graphics.push()
-				love.graphics.translate(-view2.x, -view2.y)
-				love.graphics.setStencilTest("greater", 0)
-
-				love.graphics.setColor(255, 255, 255, 255)
-				love.graphics.draw(img, 0 - img:getWidth()/2, 0 - img:getHeight()/2)    -- map
-
-				love.graphics.setColor(p1.color.r, p1.color.g, p1.color.b, p1.color.a)  -- player 1
-				love.graphics.rectangle("fill", p1.v.x - 5, p1.v.y - 5, 10, 10)
-
-				love.graphics.setColor(p2.color.r, p2.color.g, p2.color.b, p2.color.a)  -- player 2
-				love.graphics.rectangle("fill", p2.v.x - 5, p2.v.y - 5, 10, 10)
-
-				love.graphics.setStencilTest()
-			love.graphics.pop()
-		else
+		--------------  Draw separation Line  --------------
+		love.graphics.push()
+			love.graphics.translate(windowWidth/2, windowHeight/2)
+			love.graphics.rotate(angle:angleTo())
+			love.graphics.line(-length/2, 0, length/2, 0)
+		love.graphics.pop()
+		----------------------------------------------------
+	else
+		------------------- Draw only p1 view ---------------
+		love.graphics.push()
 			love.graphics.translate(-view1.x, -view1.y)
 
-			love.graphics.setColor(255, 255, 255, 255)
-			love.graphics.draw(img, 0 - img:getWidth()/2, 0 - img:getHeight()/2)
+			drawMap()
+			drawPlayer(p1)
+			drawPlayer(p2)
 
-			love.graphics.setColor(p1.color.r, p1.color.g, p1.color.b, p1.color.a)
-			love.graphics.rectangle("fill", p1.v.x - 5, p1.v.y - 5, 10, 10)
-
-			love.graphics.setColor(p2.color.r, p2.color.g, p2.color.b, p2.color.a)
-			love.graphics.rectangle("fill", p2.v.x - 5, p2.v.y - 5, 10, 10)
-		end
-
+		love.graphics.pop()
+		----------------------------------------------------
+	end
 end
 
 
 function love.update(dt)
 	movePlayer(dt)
 
-	singleView = true
-
 	if shouldSplit(p1.v, p2.v) then
 		singleView = false
 		local idealPos = viewPosition(p1.v, p2.v);
 		view1 = view1 +  (idealPos - (view1 + window / 2)) * dt * 10;  -- speed
 
-		idealPos = viewPosition(p2.v, p1.v);
+		local idealPos = viewPosition(p2.v, p1.v);
 		view2 = view2 +  (idealPos - (view2 + window / 2)) * dt * 10;  -- speed
 	else
+		singleView = false
 		-- If we don't want a split view, then the ideal position is the halfway
 		-- point between both players.
 		local idealPos = (p1.v + p2.v) / 2
