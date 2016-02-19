@@ -63,7 +63,7 @@ end
 
 function drawMap()
 	love.graphics.setColor(255, 255, 255, 255)
-	love.graphics.draw(img, 0 - img:getWidth()/2, 0 - img:getHeight()/2)
+	love.graphics.draw(img, 0 - img:getWidth()/2, 0 - img:getHeight()/2, 0 , 2, 2)
 end
 
 function drawPlayer(player)
@@ -91,6 +91,7 @@ function love.load()
 	}
 
 	img = love.graphics.newImage("img.png")
+	img:setFilter("nearest", "nearest")
 
 	view1 = vector(0,0)
 	view2 = vector(0,0)
