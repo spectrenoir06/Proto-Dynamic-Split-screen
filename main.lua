@@ -53,8 +53,7 @@ function viewPosition(p1, p2)
 
 	local length = direction:len()
 
-	if(length > MAX_DISTANCE) then
-		-- thor::setLength(direction, MAX_DISTANCE)
+	if length > MAX_DISTANCE then
 		direction = direction * (MAX_DISTANCE / direction:len())
 	end
 
