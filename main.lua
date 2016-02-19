@@ -4,7 +4,7 @@ function love.load()
 
 	if arg[#arg] == "-debug" then require("mobdebug").start() end
 
-	windowWidth	= love.graphics.getWidth()
+	windowWidth  = love.graphics.getWidth()
 	windowHeight = love.graphics.getHeight()
 
 	window = vector(windowWidth, windowHeight)
@@ -31,12 +31,8 @@ function love.load()
 
 	img = love.graphics.newImage("img.png")
 
-	view1 = {
-		v = vector(0,0)
-	}
-	view2 = {
-		v = vector(0,0)
-	}
+	view1 = vector(0,0)
+	view2 = vector(0,0)
 end
 
 function movePlayer(dt)
@@ -104,76 +100,53 @@ function love.draw()
 
 		-- If we're splitting the views then we'll do the same for player twos view.
 		if not singleView then
-			--print("split")
-			-- -- Draw all our normal stuff from players twos point of view.
 			love.graphics.push()
+				love.graphics.translate(windowWidth/2, windowHeight/2)
+				local angle = (p1.v - p2.v):perpendicular()
 
+				love.graphics.rotate(angle:angleTo())
+				local length = window:len()
 
-			love.graphics.setColor(255, 0,0, 125)
+				love.graphics.line(-length, 0, length, 0)
 
-			love.graphics.translate(windowWidth/2, windowHeight/2)
-
-			local angle = (p1.v - p2.v):perpendicular()
-			-- angle:setLength(10000)
-			-- print(angle.x, angle.y)
-
-			love.graphics.line(0, 0, angle.x, angle.y)
-			love.graphics.line(0, 0, -angle.x, -angle.y)
-
-			love.graphics.rotate(angle:angleTo())
-
-			print(angle:angleTo())
-
-			--love.graphics.rectangle('fill', -800, 0, 800*2, 800)
-			love.graphics.stencil(function()
-				love.graphics.rectangle('fill', -800, 0, 800*2, 800)
-			end, "replace", 1)
-
+				love.graphics.stencil(function()
+					love.graphics.rectangle('fill', -800, 0, 800*2, 800)
+				end, "replace", 1)
 			love.graphics.pop()
-
-			--love.graphics.translate(-view1.v.x, -view1.v.y)
 
 			love.graphics.push()
 				love.graphics.setStencilTest("less", 1)
-			--print(view1.v.x, view1.v.y)
-				love.graphics.translate(-view1.v.x, -view1.v.y)
+				love.graphics.translate(-view1.x, -view1.y)
 
 				love.graphics.setColor(255, 255, 255, 255)
-				love.graphics.draw(img, 0 - img:getWidth()/2, 0 - img:getHeight()/2)
+				love.graphics.draw(img, 0 - img:getWidth()/2, 0 - img:getHeight()/2)   -- map
 
-				love.graphics.setColor(p1.color.r, p1.color.g, p1.color.b, p1.color.a)
+				love.graphics.setColor(p1.color.r, p1.color.g, p1.color.b, p1.color.a) -- player 1
 				love.graphics.rectangle("fill", p1.v.x - 5, p1.v.y - 5, 10, 10)
 
-				love.graphics.setColor(p2.color.r, p2.color.g, p2.color.b, p2.color.a)
-				love.graphics.rectangle("fill", p2.v.x - 5, p2.v.y - 5, 10, 10)
-			love.graphics.pop()
-
-			love.graphics.push()
-				love.graphics.translate(-view2.v.x, -view2.v.y)
-
-				love.graphics.setStencilTest("greater", 0)
-
-				love.graphics.setColor(255, 255, 255, 255)
-				love.graphics.draw(img, 0 - img:getWidth()/2, 0 - img:getHeight()/2)
-
-				love.graphics.setColor(p1.color.r, p1.color.g, p1.color.b, p1.color.a)
-				love.graphics.rectangle("fill", p1.v.x - 5, p1.v.y - 5, 10, 10)
-
-				love.graphics.setColor(p2.color.r, p2.color.g, p2.color.b, p2.color.a)
+				love.graphics.setColor(p2.color.r, p2.color.g, p2.color.b, p2.color.a) -- player 2
 				love.graphics.rectangle("fill", p2.v.x - 5, p2.v.y - 5, 10, 10)
 
 				love.graphics.setStencilTest()
 			love.graphics.pop()
 
-			love.graphics.translate(windowWidth/2, windowHeight/2)
+			love.graphics.push()
+				love.graphics.translate(-view2.x, -view2.y)
+				love.graphics.setStencilTest("greater", 0)
 
-			local angle = (p1.v - p2.v):perpendicular()
+				love.graphics.setColor(255, 255, 255, 255)
+				love.graphics.draw(img, 0 - img:getWidth()/2, 0 - img:getHeight()/2)    -- map
 
-			love.graphics.line(0, 0, angle.x, angle.y)
-			love.graphics.line(0, 0, -angle.x, -angle.y)
+				love.graphics.setColor(p1.color.r, p1.color.g, p1.color.b, p1.color.a)  -- player 1
+				love.graphics.rectangle("fill", p1.v.x - 5, p1.v.y - 5, 10, 10)
 
+				love.graphics.setColor(p2.color.r, p2.color.g, p2.color.b, p2.color.a)  -- player 2
+				love.graphics.rectangle("fill", p2.v.x - 5, p2.v.y - 5, 10, 10)
+
+				love.graphics.setStencilTest()
+			love.graphics.pop()
 		else
-			love.graphics.translate(-view1.v.x, -view1.v.y)
+			love.graphics.translate(-view1.x, -view1.y)
 
 			love.graphics.setColor(255, 255, 255, 255)
 			love.graphics.draw(img, 0 - img:getWidth()/2, 0 - img:getHeight()/2)
@@ -196,19 +169,19 @@ function love.update(dt)
 	if shouldSplit(p1.v, p2.v) then
 		singleView = false
 		local idealPos = viewPosition(p1.v, p2.v);
-		view1.v = view1.v +  (idealPos - (view1.v + window / 2)) * dt * 10;  -- speed
+		view1 = view1 +  (idealPos - (view1 + window / 2)) * dt * 10;  -- speed
 
 		idealPos = viewPosition(p2.v, p1.v);
-		view2.v = view2.v +  (idealPos - (view2.v + window / 2)) * dt * 10;  -- speed
+		view2 = view2 +  (idealPos - (view2 + window / 2)) * dt * 10;  -- speed
 	else
 		-- If we don't want a split view, then the ideal position is the halfway
 		-- point between both players.
 		local idealPos = (p1.v + p2.v) / 2
-		view1.v = view1.v +  (idealPos - (view1.v + window / 2)) * dt * 10;  -- speed
+		view1 = view1 +  (idealPos - (view1 + window / 2)) * dt * 10;  -- speed
 		-- Set player twos cameras to the same as player ones, this will avoid an jump if the cameras split again
 		-- far away from where they last merged.
-		view2.v.x = view1.v.x
-		view2.v.y = view1.v.y
+		view2.x = view1.x
+		view2.y = view1.y
 	end
 end
 
