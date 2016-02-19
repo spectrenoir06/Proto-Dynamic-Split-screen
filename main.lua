@@ -171,7 +171,7 @@ function love.update(dt)
 		local idealPos = viewPosition(p2.v, p1.v);
 		view2 = view2 +  (idealPos - (view2 + window / 2)) * dt * 10;  -- speed
 	else
-		singleView = false
+		singleView = true
 		-- If we don't want a split view, then the ideal position is the halfway
 		-- point between both players.
 		local idealPos = (p1.v + p2.v) / 2
